@@ -3,7 +3,7 @@ from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, AnyOf, URL
 
-genres_choices = [
+genres = [
     ('Alternative', 'Alternative'),
     ('Blues', 'Blues'),
     ('Classical', 'Classical'),
@@ -25,7 +25,7 @@ genres_choices = [
     ('Other', 'Other'),
 ]
 
-state_choices = [
+states = [
     ('AL', 'AL'),
     ('AK', 'AK'),
     ('AZ', 'AZ'),
@@ -101,7 +101,7 @@ class VenueForm(Form):
     )
     state = SelectField(
         'state', validators=[DataRequired()],
-        choices=state_choices
+        choices=states
     )
     address = StringField(
         'address', validators=[DataRequired()]
@@ -114,7 +114,7 @@ class VenueForm(Form):
     )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired()],
-        choices=genres_choices
+        choices=genres
     )
     facebook_link = StringField(
         'facebook_link', validators=[URL()]
@@ -139,7 +139,7 @@ class ArtistForm(Form):
     )
     state = SelectField(
         'state', validators=[DataRequired()],
-        choices=state_choices
+        choices=states
     )
 
     phone = StringField(
@@ -151,7 +151,7 @@ class ArtistForm(Form):
     )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired()],
-        choices=genres_choices
+        choices=genres
     )
     facebook_link = StringField(
         'facebook_link', validators=[URL()]

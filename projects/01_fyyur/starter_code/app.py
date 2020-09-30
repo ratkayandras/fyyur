@@ -13,7 +13,6 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
-from sqlalchemy import func
 from datetime import *
 #----------------------------------------------------------------------------#
 # App Config.
@@ -59,44 +58,47 @@ def index():
 
 @app.route('/venues')
 def venues():
-  all_areas = Venue.query.with_entities(func.count(Venue.id), Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
-  data = []
+  all_states = Venue.query.with_entities(Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
+  areas = []
 
-  for area in all_areas:
-    area_venues = Venue.query.filter_by(state=area.state).filter_by(city=area.city).all()
+  for state in all_states:
+    state_venues = Venue.query.filter_by(state=state.state).all()
     venue_data = []
-    for venue in area_venues:
+    for venue in state_venues:
       venue_data.append({
         "id": venue.id,
         "name": venue.name, 
-        "num_upcoming_shows": len(db.session.query(Show).filter(Show.venue_id==venue.id).filter(Show.start_time>datetime.now()).all())
+        "num_upcoming_shows": seachVenueShowCount(venue.id)
       })
-    data.append({
-      "city": area.city,
-      "state": area.state, 
+    areas.append({
+      "city": state.city,
+      "state": state.state, 
       "venues": venue_data
     })
 
-  return render_template('pages/venues.html', areas=data)
+  return render_template('pages/venues.html', areas=areas)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  search_term = request.form.get('search_term', '')
-  search_result = db.session.query(Venue).filter(Venue.name.ilike(f'%{search_term}%')).all()
+  search_word = request.form.get('search_term', '')
+  results = db.session.query(Venue).filter(Venue.name.ilike(f'%{search_word}%')).all()
   data = []
 
-  for result in search_result:
+  for result in results:
     data.append({
       "id": result.id,
       "name": result.name,
-      "num_upcoming_shows": len(db.session.query(Show).filter(Show.venue_id == result.id).filter(Show.start_time > datetime.now()).all()),
+      "num_upcoming_shows": seachVenueShowCount(result.id)
     })
   
   response={
-    "count": len(search_result),
+    "count": len(results),
     "data": data
   }
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+
+def seachVenueShowCount(id: int) -> int:
+  return len(db.session.query(Show).filter(Show.venue_id == id).filter(Show.start_time > datetime.now()).all())
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -126,7 +128,7 @@ def show_venue(venue_id):
         "start_time": show.start_time.strftime("%Y-%m-%d")    
       })
 
-  data = {
+  venue = {
     "id": venue.id,
     "name": venue.name,
     "address": venue.address,
@@ -145,7 +147,7 @@ def show_venue(venue_id):
     "upcoming_shows_count": len(upcoming_shows),
   }
 
-  return render_template('pages/show_venue.html', venue=data)
+  return render_template('pages/show_venue.html', venue=venue)
 
 
 #  Create Venue
@@ -167,9 +169,9 @@ def create_venue_submission():
     address = request.form['address']
     phone = request.form['phone']
     genres = request.form.getlist('genres')
-    image_link = request.form['image_link']
     facebook_link = request.form['facebook_link']
     website = request.form['website']
+    image_link = request.form['image_link']
     seeking_talent = True if 'seeking_talent' in request.form else False 
     seeking_description = request.form['seeking_description']
 
@@ -217,11 +219,11 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  search_term = request.form.get('search_term', '')
-  search_result = db.session.query(Artist).filter(Artist.name.ilike(f'%{search_term}%')).all()
+  search_word = request.form.get('search_term', '')
+  results = db.session.query(Artist).filter(Artist.name.ilike(f'%{search_word}%')).all()
   data = []
 
-  for result in search_result:
+  for result in results:
     data.append({
       "id": result.id,
       "name": result.name,
@@ -229,7 +231,7 @@ def search_artists():
     })
   
   response={
-    "count": len(search_result),
+    "count": len(results),
     "data": data
   }
 
